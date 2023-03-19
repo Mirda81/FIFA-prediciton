@@ -2,6 +2,8 @@ from scipy.stats import skew, kurtosis
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import numpy as np
+
 
 def des_object(df, varname):
     table = vcounts = df[varname].value_counts()
@@ -81,3 +83,35 @@ def des_df(df):
             des_object(df,c)
         else:
             des_numeric(df,c)
+
+
+
+from scipy.stats import poisson
+def get_goals_proba(lam):
+    return [poisson.pmf(i, lam) for i in range(0,6)] + [1 - poisson.cdf(5, lam)]
+
+def get_goal_line_proba(p1_avg_goals, p2_avg_goals):
+    p1=get_goals_proba(p1_avg_goals)
+    p2=get_goals_proba(p2_avg_goals)
+    
+    p_total_gt15 = sum(p1[i]*sum(p2[j] for j in range(len(p2)) if i+j > 1) for i in range(len(p1)))
+    p_total_gt25 = sum(p1[i]*sum(p2[j] for j in range(len(p2)) if i+j > 2) for i in range(len(p1)))
+    p_total_gt35 = sum(p1[i]*sum(p2[j] for j in range(len(p2)) if i+j > 3) for i in range(len(p1)))
+    p_total_gt45 = sum(p1[i]*sum(p2[j] for j in range(len(p2)) if i+j > 4) for i in range(len(p1)))
+    p_total_gt55 = sum(p1[i]*sum(p2[j] for j in range(len(p2)) if i+j > 5) for i in range(len(p1)))
+    
+    return {'over 1.5': p_total_gt15,'over 2.5': p_total_gt25, 'over 3.5': p_total_gt35, 'over 4.5': p_total_gt45, 'over 5.5': p_total_gt55 }
+def get_win_proba(p1_avg_goals, p2_avg_goals):
+    p1=get_goals_proba(p1_avg_goals)
+    p2=get_goals_proba(p2_avg_goals)
+    win_p1 = sum(p1[i] * sum(p2[j] for j in range(i)) for i in range(len(p1)))
+    win_p2 = sum(p2[i] * sum(p1[j] for j in range(i)) for i in range(len(p2)))
+    tie_p = 1-win_p1-win_p2
+    return f"{round(win_p1*100,2)} - {round(tie_p*100,2)} - {round(win_p2*100,2)}"
+
+
+
+
+
+
+
